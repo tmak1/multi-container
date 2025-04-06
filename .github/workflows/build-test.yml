@@ -4,16 +4,18 @@ on: workflow_call
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
     steps:
       - name: Chekcout repository
         uses: actions/checkout@v4
 
-      - name: cd into client app
-        run: pwd
-        working-directory: client
-
       - name: Cache node_modules with npm
-        uses: ./.github/actions/cache-npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ hashFiles('client/**package-lock.json') }}
 
       - name: Install dependencies
         run: npm ci
@@ -31,12 +33,18 @@ jobs:
   test:
     needs: [build]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
     steps:
       - name: Chekcout repository
         uses: actions/checkout@v4
 
       - name: Cache node_modules with npm
-        uses: ./.github/actions/cache-npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ hashFiles('client/**package-lock.json') }}
 
       - name: Install dependencies
         run: npm ci
