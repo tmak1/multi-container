@@ -1,0 +1,62 @@
+name: Build and test
+on: workflow_call
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Chekcout repository
+        uses: actions/checkout@v4
+
+      - name: Cache node_modules with npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ hashFiles('client/**package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: client/build
+          retention-days: 1
+
+  test:
+    needs: [build]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Chekcout repository
+        uses: actions/checkout@v4
+
+      - name: Cache node_modules with npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ hashFiles('client/**package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm run test
+
+      - name: Upload test converage report
+        if: always()
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: test-coverage-report
+          path: client/coverage
+          retention-days: 1
